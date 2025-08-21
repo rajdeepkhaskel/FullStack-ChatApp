@@ -82,6 +82,17 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
+  deleteAccount: async () => {
+    try {
+      await axiosInstance.delete("/auth/delete-account");
+      set({ authUser: null });
+      toast.success("Account deleted successfully");
+      get().disconnectSocket();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to delete account");
+    }
+  },
+
   connectSocket: () => {
     const { authUser } = get();
     if (!authUser || get().socket?.connected) return;
@@ -97,6 +108,28 @@ export const useAuthStore = create((set, get) => ({
 
     socket.on("getOnlineUsers", (userIds) => {
       set({ onlineUsers: userIds });
+    });
+
+    // Listen for userDeleted event
+    socket.on("userDeleted", ({ userId }) => {
+      // Remove deleted user from contacts/messages UI
+      const chatStore = require("./useChatStore").useChatStore.getState();
+
+      // Remove from users list
+      chatStore.setUsers(
+        chatStore.users.filter((user) => user._id !== userId)
+      );
+
+      // If chatting with deleted user, close chat
+      if (chatStore.selectedUser?._id === userId) {
+        chatStore.setSelectedUser(null);
+      }
+
+      // Optionally, refresh users from server
+      chatStore.getUsers();
+
+      // Optionally show a toast
+      toast("A user has deleted their account.");
     });
   },
   disconnectSocket: () => {

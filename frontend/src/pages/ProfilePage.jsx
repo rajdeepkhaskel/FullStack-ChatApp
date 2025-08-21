@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import { Camera, Mail, User } from "lucide-react";
+import toast from "react-hot-toast";
 
 const ProfilePage = () => {
-  const { authUser, isUpdatingProfile, updateProfile } = useAuthStore();
+  const { authUser, isUpdatingProfile, updateProfile, deleteAccount } = useAuthStore();
   const [selectedImg, setSelectedImg] = useState(null);
   const [removing, setRemoving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -40,6 +42,36 @@ const ProfilePage = () => {
 
     await updateProfile({ profilePic: "", publicId });
     setRemoving(false);
+  };
+
+  const handleDeleteAccount = () => {
+    toast(
+      (t) => (
+        <span>
+          Are you sure you want to delete your account?<br />
+          <button
+            className="btn btn-error btn-sm mt-2 mr-2"
+            onClick={async () => {
+              toast.dismiss(t.id);
+              setDeleting(true);
+              await deleteAccount();
+              setDeleting(false);
+            }}
+            disabled={deleting}
+          >
+            Yes, Delete
+          </button>
+          <button
+            className="btn btn-sm mt-2"
+            onClick={() => toast.dismiss(t.id)}
+            disabled={deleting}
+          >
+            Cancel
+          </button>
+        </span>
+      ),
+      { duration: 10000 }
+    );
   };
 
   return (
@@ -123,6 +155,16 @@ const ProfilePage = () => {
                 <span className="text-green-500">Active</span>
               </div>
             </div>
+          </div>
+          {/* Add Delete Account Button */}
+          <div className="mt-8 text-center">
+            <button
+              className="btn btn-error"
+              onClick={handleDeleteAccount}
+              disabled={deleting}
+            >
+              {deleting ? "Deleting..." : "Delete Account"}
+            </button>
           </div>
         </div>
       </div>

@@ -83,4 +83,5 @@ export const useChatStore = create((set, get) => ({
       toast.error(error.response?.data?.error || "Failed to delete message");
     }
   },
+  setUsers: (users) => set({ users }),
 }));
