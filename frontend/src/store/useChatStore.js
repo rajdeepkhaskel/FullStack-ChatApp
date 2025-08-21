@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import toast from "react-hot-toast";
-import { axiosInstance } from "../lib/axios";
+import { axiosInstance, deleteMessage as deleteMessageApi } from "../lib/axios";
 import { useAuthStore } from "./useAuthStore";
 
 export const useChatStore = create((set, get) => ({
@@ -57,12 +57,30 @@ export const useChatStore = create((set, get) => ({
         messages: [...get().messages, newMessage],
       });
     });
+
+    // Listen for messageDeleted event
+    socket.on("messageDeleted", ({ messageId }) => {
+      get().removeMessage(messageId);
+    });
   },
 
   unsubscribeFromMessages: () => {
     const socket = useAuthStore.getState().socket;
     socket.off("newMessage");
+    socket.off("messageDeleted");
   },
 
   setSelectedUser: (selectedUser) => set({ selectedUser }),
+  removeMessage: (id) =>
+    set((state) => ({
+      messages: state.messages.filter((msg) => msg._id !== id),
+    })),
+  deleteMessage: async (id) => {
+    try {
+      await deleteMessageApi(id);
+      get().removeMessage(id);
+    } catch (error) {
+      toast.error(error.response?.data?.error || "Failed to delete message");
+    }
+  },
 }));

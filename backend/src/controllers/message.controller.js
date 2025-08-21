@@ -1,6 +1,5 @@
 import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
-
 import cloudinary from "../lib/cloudinary.js";
 import { getReceiverSocketId, io } from "../lib/socket.js";
 
@@ -68,3 +67,45 @@ export const sendMessage = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+export const deleteMessage = async (req, res) => {
+  try {
+    const messageId = req.params.id;
+    const userId = req.user._id;
+    const message = await Message.findById(messageId);
+    if (!message) {
+      return res.status(404).json({ error: 'Message not found' });
+    }
+    // Only allow deleting own messages
+    if (String(message.senderId) !== String(userId)) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    // If message has an image, delete it from Cloudinary
+    if (message.image) {
+      // Extract public_id from the image URL
+      const publicIdMatch = message.image.match(/\/([^\/]+)\.[a-zA-Z]+$/);
+      if (publicIdMatch) {
+        const publicId = publicIdMatch[1];
+        try {
+          await cloudinary.uploader.destroy(publicId);
+        } catch (err) {
+          // Optionally log error, but don't block message deletion
+          console.error("Cloudinary image delete error:", err.message);
+        }
+      }
+    }
+
+    await message.deleteOne();
+
+    // Emit socket event to remove message from UI
+    const receiverSocketId = getReceiverSocketId(message.receiverId);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit('messageDeleted', { messageId });
+    }
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ error: 'Server error' });
+  }
+};
+
