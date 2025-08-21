@@ -5,6 +5,7 @@ import { Camera, Mail, User } from "lucide-react";
 const ProfilePage = () => {
   const { authUser, isUpdatingProfile, updateProfile } = useAuthStore();
   const [selectedImg, setSelectedImg] = useState(null);
+  const [removing, setRemoving] = useState(false);
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -19,6 +20,13 @@ const ProfilePage = () => {
       setSelectedImg(base64Image);
       await updateProfile({ profilePic: base64Image });
     };
+  };
+
+  const handleRemovePhoto = async () => {
+    setRemoving(true);
+    setSelectedImg(null);
+    await updateProfile({ profilePic: "" });
+    setRemoving(false);
   };
 
   return (
@@ -63,6 +71,13 @@ const ProfilePage = () => {
             <p className="text-sm text-zinc-400">
               {isUpdatingProfile ? "Uploading..." : "Click the camera icon to update your photo"}
             </p>
+            <button
+              className="btn btn-sm btn-error mt-2"
+              onClick={handleRemovePhoto}
+              disabled={removing || isUpdatingProfile || !authUser.profilePic}
+            >
+              {removing ? "Removing..." : "Remove Photo"}
+            </button>
           </div>
 
           <div className="space-y-6">

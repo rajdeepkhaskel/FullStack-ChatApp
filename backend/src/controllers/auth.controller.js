@@ -90,6 +90,16 @@ export const updateProfile = async (req, res) => {
     const { profilePic } = req.body;
     const userId = req.user._id;
 
+    // If profilePic is an empty string, remove the photo
+    if (profilePic === "") {
+      const updatedUser = await User.findByIdAndUpdate(
+        userId,
+        { profilePic: "" },
+        { new: true }
+      );
+      return res.status(200).json(updatedUser);
+    }
+
     if (!profilePic) {
       return res.status(400).json({ message: "Profile pic is required" });
     }
