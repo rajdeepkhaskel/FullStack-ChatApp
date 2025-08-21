@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { axiosInstance } from "../lib/axios.js";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
+import { useChatStore } from "./useChatStore";
 
 const BASE_URL = import.meta.env.MODE === "development" ? "http://localhost:5001" : "/";
 
@@ -129,7 +130,14 @@ export const useAuthStore = create((set, get) => ({
       chatStore.getUsers();
 
       // Optionally show a toast
-      toast("A user has deleted their account.");
+      toast(`User ${userId.fullName} has deleted their account.`);
+    });
+
+    // Listen for userCreated event
+    socket.on("userCreated", (newUser) => {
+      // Use the hook to trigger state update and re-render
+      useChatStore.getState().getUsers();
+      toast.success(`${newUser.fullName} just joined!`);
     });
   },
   disconnectSocket: () => {

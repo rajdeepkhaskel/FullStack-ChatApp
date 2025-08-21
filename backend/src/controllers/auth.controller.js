@@ -34,6 +34,15 @@ export const signup = async (req, res) => {
       generateToken(newUser._id, res);
       await newUser.save();
 
+      // Emit event to all clients about new user
+      io.emit("userCreated", {
+        _id: newUser._id,
+        fullName: newUser.fullName,
+        email: newUser.email,
+        profilePic: newUser.profilePic,
+        createdAt: newUser.createdAt,
+      });
+
       res.status(201).json({
         _id: newUser._id,
         fullName: newUser.fullName,

@@ -5,7 +5,12 @@ import SidebarSkeleton from "./skeletons/SidebarSkeleton";
 import { Users } from "lucide-react";
 
 const Sidebar = () => {
-  const { getUsers, users, selectedUser, setSelectedUser, isUsersLoading } = useChatStore();
+  // Use Zustand selectors for users and loading state
+  const users = useChatStore((state) => state.users);
+  const isUsersLoading = useChatStore((state) => state.isUsersLoading);
+  const getUsers = useChatStore((state) => state.getUsers);
+  const selectedUser = useChatStore((state) => state.selectedUser);
+  const setSelectedUser = useChatStore((state) => state.setSelectedUser);
 
   const { onlineUsers } = useAuthStore();
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
@@ -13,6 +18,10 @@ const Sidebar = () => {
   useEffect(() => {
     getUsers();
   }, [getUsers]);
+
+  useEffect(() => {
+    console.log("Sidebar users updated:", users);
+  }, [users]);
 
   const filteredUsers = showOnlineOnly
     ? users.filter((user) => onlineUsers.includes(user._id))
