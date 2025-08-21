@@ -25,7 +25,20 @@ const ProfilePage = () => {
   const handleRemovePhoto = async () => {
     setRemoving(true);
     setSelectedImg(null);
-    await updateProfile({ profilePic: "" });
+
+    // Extract public_id from Cloudinary URL
+    const profilePicUrl = authUser.profilePic;
+    let publicId = null;
+    if (profilePicUrl) {
+      // Cloudinary URLs are like: https://res.cloudinary.com/<cloud_name>/image/upload/v<version>/<public_id>.<ext>
+      // We'll extract <public_id>.<ext> and remove the extension
+      const match = profilePicUrl.match(/\/([^\/]+)\.[a-zA-Z]+$/);
+      if (match) {
+        publicId = match[1];
+      }
+    }
+
+    await updateProfile({ profilePic: "", publicId });
     setRemoving(false);
   };
 
